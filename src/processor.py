@@ -11,9 +11,180 @@ from src.ASRBubble import ASRBubble
 
 from configparser import ConfigParser
 config = ConfigParser()
-config.read('config.ini')
+config.read('config.ini',encoding='utf-8')
 
 weekdays = {'thứ hai':0, 'thứ ba':1, 'thứ tư':2, 'thứ năm':3, 'thứ sáu':4, 'thứ bảy':5, 'chủ nhật':6}
+
+class Service():
+    def __init__(self,*params):
+        self.params = params
+    
+class AlarmTimerService(Service):
+    def parseTime(self,arr): 
+        pod = ""
+        if "pod" in arr.keys():
+            pod = arr["pod"]
+
+        if "time" in arr.keys():
+            time = arr['time'] #"hh:mm" or "X giờ"
+            if ':' not in time:
+                time = time.split()[0] + ':00'
+            if pod not in ["sáng", "trưa",""]:
+                time = time.split(":")
+                h = int(time[0])
+                if(h<12):
+                    h = h +12
+                time = str(h) +":"+ time[1]
+            print(time)
+            return time+":00"
+        else:
+            h=""
+            m=""
+            s=""
+            if 'hour' in arr.keys():
+                h = arr['hour'].split()[0]
+            if 'minute' in arr.keys():
+                m = arr['minute'].split()[0]
+            if 'second' in arr.keys():
+                s = arr['second'].split()[0]
+            print(h,m,s)
+
+            if h== "" and m == "" and s == "":
+                return ""
+            return "{}:{}:{}".format(h,m,s)
+    def parseDate(self,arr): #return day  in dd/mm , "" if day couldnt be parsed
+        repeat = False
+        today = date.today()
+        day = today.strftime("%d/%m")
+
+        if "repeat" in arr.keys():
+            repeat = True
+
+        if 'date_name' in arr.keys():
+            day = arr['date_name']
+            if repeat:
+                return str(weekdays[day]) 
+            if 'relative' in arr.keys():
+                WeekdayToDate(day,arr['relative'])
+            else:
+                WeekdayToDate(day)
+        elif 'date_number' in arr.keys():
+            day = arr['date_number']
+            if 'month' in arr.keys():
+                day = day + ' ' + arr['month']
+            else: #no month provided
+                today = date.today()
+                month = today.strftime("%m")
+                day = day + " tháng " + str(month)
+        elif 'relative' in arr.keys():
+                day = arr['relative']
+                day= formatDate(day)
+
+        elif repeat:
+            return 'X'
+
+        day =day.replace('ngày ','').replace(' tháng ','/')
+        while ('/' in day) and len(day) < 5: #pad to correct dd/mm format
+            if day[1] == '/': #d/mm or d/m
+                day = '0' + day
+            else:
+                day = day[:-1] + '0' + day[-1]
+        return day
+    def setAlarm(self):
+        arr = self.params
+        day = self.parseDate(arr)
+
+        _time = self.parseTime(arr)
+        #cut seconds
+        _time = _time[:-3]
+
+        if _time == "" or day == "": #no time or date given
+            print("Invalid")
+            return
+
+        if day == "X":
+            print("time: ",_time,"date: everyday")
+        elif len(day) == 1:
+            print("time: ",_time,"date: ",arr['date_name'])
+        else:
+            print("time: ",_time,"date: ",day)
+
+        addAlarm(day,_time)
+
+    def setTimer(self,target): #target: MainApp frame
+        arr = self.params
+        _time = self.parseTime(arr)
+        if _time == "": #no time given
+            print("Invalid")
+            return
+        target.setTimer(_time)
+
+class MusicService(Service):
+    def createQuery(self):
+        arr = self.params.arr
+        text = self.params.text
+        song_name = ""
+        album = ""
+        artist = ""
+        genre = ""
+        if "song_name" in arr.keys():
+            song_name = "bài hát "+ arr["song_name"] 
+        if "album" in arr.keys():
+            album = "album" + arr['album']
+        if "artist" in arr.keys():
+            artist = arr['artist']
+        if "genre" in arr.keys():
+            genre = "nhạc " + arr['genre']
+
+        if song_name != "" :
+            query = song_name + artist
+        elif album != "":
+            query = album + artist
+        elif genre != "":
+            query = genre + artist
+        elif artist != "":
+            query = "nhạc "+ artist
+        else:
+            query = text
+        
+        print("query: ",query)
+        return query
+    def searchQuery(self,query):
+        search(query)
+
+    def play(self,url):
+        try:
+            webbrowser.open(url)
+        except Exception:
+                    print("Exception: "+str(Exception))
+
+class WeatherService(Service):
+    def createQuery(self):
+        arr = self.params
+        location = config.get("main","location")
+        today = date.today()
+        day = today.strftime("%d/%m")
+        pod = ""
+        date_name = ""
+
+        if "location" in arr.keys():
+            location = arr["location"]
+        if "pod" in arr.keys():
+            pod = arr["pod"]
+        ats = AlarmTimerService(arr)
+        day = ats.parseDate(arr)
+
+        query = "thời tiết {} {} {}".format(location,pod,day) 
+        print("query: ",query)
+        return query
+    def searchQuery(self,query):
+        search(query)
+
+
+class SearchService(Service):
+    def search(self,text):
+        search(text)
+
 
 def recognize(master,recognizer,microphone,idsf):
     with microphone as source:
@@ -58,94 +229,35 @@ def extract(text,labels):
 def process(intent,text,slots,target = None):
     print(intent,text,slots)
     arr = extract(text,slots)
+    
     if intent == "play_song":
-        song_name = ""
-        album = ""
-        artist = ""
-        genre = ""
-        if "song_name" in arr.keys():
-            song_name = "bài hát "+ arr["song_name"] 
-        if "album" in arr.keys():
-            album = "album" + arr['album']
-        if "artist" in arr.keys():
-            artist = arr['artist']
-        if "genre" in arr.keys():
-            genre = "nhạc " + arr['genre']
-
-        if song_name != "" :
-            query = song_name + artist
-        elif album != "":
-            query = album + artist
-        elif genre != "":
-            query = genre + artist
-        elif artist != "":
-            query = "nhạc "+ artist
-        else:
-            query = text
-        
-        print("query: ",query)
-        while True:
-            result = YoutubeSearch(query, max_results=10).to_dict()
-            if result:
-                break
-
-        url = 'https://www.youtube.com' + result[0]['url_suffix']
-        try:
-            webbrowser.open(url)
-        except Exception:
-                    print("Exception: "+str(Exception))
-
+        music = MusicService(arr = arr,text = text)
+        query = music.createQuery()
+        link = music.searchQuery(query)
+        music.play(link)
+       
 
     elif intent == "alarm":
-        today = date.today()
-        day = today.strftime("%d/%m")
-        day = getDate(arr,day)
-
-        _time = getTime(arr)
-        #cut seconds
-        _time = _time[:-3]
-
-        if _time == "": #no time given
-            print("Invalid")
-            return
-
-        if day == "X":
-            print("time: ",_time,"date: everyday")
-        elif len(day) == 1:
-            print("time: ",_time,"date: ",arr['date_name'])
-        else:
-            print("time: ",_time,"date: ",day)
-
-        addAlarm(day,_time)
+        ats = AlarmTimerService(arr)
+        ats.setAlarm()
+       
 
     elif intent == "timer":
-        _time = getTime(arr)
-        if _time == "": #no time given
-            print("Invalid")
-            return
-        target.setTimer(_time)
+        ats = AlarmTimerService(arr)
+        ats.setTimer(target)
+        
 
     elif intent == "weather":
-        location = config.get("main","location")
-        today = date.today
-        day = today.strftime("%d/%m")
-        pod = ""
-        date_name = ""
+        ws =WeatherService(arr)
+        query = ws.createQuery()
+        ws.searchQuery(query)
 
-        if "location" in arr.keys():
-            location = arr["location"]
-        if "pod" in arr.keys():
-            pod = arr["pod"]
-        day = getDate(arr,day)
-
-        query = "thời tiết {} {} {}".format(location,pod,day) 
-        print("query: ",query)
-        search()
     else:
-        search(text)
+        s = SearchService(arr)
+        s.search(text)
     return
 
-def search(text,intent = "None"):
+def search(text):
             params = {
                 "engine": "google",
                 "q": text,
@@ -207,7 +319,7 @@ def search(text,intent = "None"):
                 if type == 'translation_result':
                     res = answer_box["translation"]["target"]["text"]
                     print(res)
-                openLink(text)
+            openLink(text)
 
 
 def openLink(text):
@@ -221,67 +333,6 @@ def openLink(text):
                     print("Exception: "+str(Exception))
 
 
-def getDate(arr,day):  
-    repeat = False
-    if "repeat" in arr.keys():
-        repeat = True
-
-    if 'date_name' in arr.keys():
-        day = arr['date_name']
-        if repeat:
-            return str(weekdays[day]) 
-        if 'relative' in arr.keys():
-            WeekdayToDate(day,arr['relative'])
-        else:
-            WeekdayToDate(day)
-    elif 'date_number' in arr.keys():
-        day = arr['date_number']
-        if 'month' in arr.keys():
-            day = day + ' ' + arr['month']
-        else: #no month provided
-            today = date.today()
-            month = today.strftime("%m")
-            day = day + " tháng " + str(month)
-    elif 'relative' in arr.keys():
-            day = arr['relative']
-            day= formatDate(day)
-
-    elif repeat:
-        return 'X'
-    return day
-
-def getTime(arr):
-    pod = ""
-    if "pod" in arr.keys():
-        pod = arr["pod"]
-
-    if "time" in arr.keys():
-        time = arr['time'] #"hh:mm" or "X giờ"
-        if ':' not in time:
-            time = time.split()[0] + ':00'
-        if pod not in ["sáng", "trưa",""]:
-            time = time.split(":")
-            h = int(time[0])
-            if(h<12):
-                h = h +12
-            time = str(h) +":"+ time[1]
-        print(time)
-        return time+":00"
-    else:
-        h=""
-        m=""
-        s=""
-        if 'hour' in arr.keys():
-            h = arr['hour'].split()[0]
-        if 'minute' in arr.keys():
-            m = arr['minute'].split()[0]
-        if 'second' in arr.keys():
-            s = arr['second'].split()[0]
-        print(h,m,s)
-
-        if h== "" and m == "" and s == "":
-            return ""
-        return "{}:{}:{}".format(h,m,s)
         
 def WeekdayToDate(day,relative = ""):
     today = date.today().weekday() #mon = 0, sun =6
@@ -301,6 +352,7 @@ def WeekdayToDate(day,relative = ""):
     print(new_date)
     return new_date
 def formatDate(day):
+    new_date = ""
     if day in ['hôm nay','nay']:
         new_date = date.today()
     elif day in ['mai','ngày mai','hôm sau','ngày hôm sau']:
@@ -312,11 +364,11 @@ def formatDate(day):
         d,m = temp[1], temp[3]
         print(d,m)
         return "{}/{}".format(d,m)
-    else:
+    elif any([i in day for i in ['ngày nữa','hôm nữa','ngày sau',' hôm sau']]):
         temp = day.split() #X ngày nữa
         offset = int(temp[0])
         new_date = datetime.now() + timedelta(days = offset)
-    new_date = new_date.strftime("%d/%m")
+    new_date = new_date.strftime("%d/%m") if new_date!= "" else ""
     print(new_date)
     return new_date
 

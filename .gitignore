@@ -1,0 +1,7 @@
+temp/**
+audio_patterns/**
+data/
+config.ini
+IDSF/
+*.bak
+alarms.txt
