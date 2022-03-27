@@ -8,7 +8,7 @@ from youtube_search import YoutubeSearch
 from datetime import date, timedelta, datetime
 from src.alarm import addAlarm
 from src.ASRBubble import ASRBubble
-
+from src.tts import TTS
 from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini',encoding='utf-8')
@@ -91,7 +91,7 @@ class AlarmTimerService(Service):
                 day = day[:-1] + '0' + day[-1]
         return day
     def setAlarm(self):
-        arr = self.params
+        arr = self.params[0]
         day = self.parseDate(arr)
 
         _time = self.parseTime(arr)
@@ -121,8 +121,8 @@ class AlarmTimerService(Service):
 
 class MusicService(Service):
     def createQuery(self):
-        arr = self.params.arr
-        text = self.params.text
+        arr = self.params[0]
+        text = self.params[1]
         song_name = ""
         album = ""
         artist = ""
@@ -160,7 +160,7 @@ class MusicService(Service):
 
 class WeatherService(Service):
     def createQuery(self):
-        arr = self.params
+        arr = self.params[0]
         location = config.get("main","location")
         today = date.today()
         day = today.strftime("%d/%m")
@@ -193,7 +193,7 @@ def recognize(master,recognizer,microphone,idsf):
                 response = recognizer.recognize_google(audio,language="vi-VN")
             except Exception:
                 response = None
-        # print(response, globals.status)
+            
     if response != None:
         text,intent,slots = idsf.predict(response.lower())
         print(intent,text,slots)
@@ -231,7 +231,7 @@ def process(intent,text,slots,target = None):
     arr = extract(text,slots)
     
     if intent == "play_song":
-        music = MusicService(arr = arr,text = text)
+        music = MusicService(arr,text)
         query = music.createQuery()
         link = music.searchQuery(query)
         music.play(link)
@@ -258,6 +258,7 @@ def process(intent,text,slots,target = None):
     return
 
 def search(text):
+            tts = TTS()
             params = {
                 "engine": "google",
                 "q": text,
@@ -268,7 +269,9 @@ def search(text):
 
             search = GoogleSearch(params)
             results = search.get_dict()
-
+            
+            openLink(text)
+            
             knowledge_graph = None
             answer_box = None
 
@@ -277,7 +280,8 @@ def search(text):
                 knowledge_graph = results["knowledge_graph"] 
                 # print(type(knowledge_graph), knowledge_graph)
                 desc = knowledge_graph["description"]
-                print(desc)
+                tts.speak(desc)
+                return
             elif 'answer_box' in results.keys():
                 answer_box = results['answer_box']
             elif 'answer_box_list' in results.keys():
@@ -291,35 +295,37 @@ def search(text):
                     day = answer_box['date']
                     weather = answer_box['weather']
                     humid = answer_box['humidity']
-                    print(location,day,weather,temp,humid)
+                    tts.speak("{} ngày {} {}, nhiệt độ {} độ, độ ẩm {}%".format(location,day,weather,temp,humid))
                 if type == "calculator_result":
                     res = answer_box['result']
-                    print(res)
+                    tts.speak(res)
                 if type == "population_result":
                     pop = answer_box["population"]
                     place = answer_box['place']
                     year = answer_box['year']
 
-                    print(place,pop,year)
+                    tts.speak("Dân số {} năm {} là {}.".format(place,year,pop))
                 if type == "currency_converter":
                     res = answer_box['result']
-                    print(res)
+                    tts.speak(res)
                 if type == "dictionary_results":
                     defi = answer_box["dictionary_results"] #array of str
                     exs = answer_box["examples"] #array of str
 
-                    print(defi,exs)
+                    tts.speak("{}. Ví dụ: {}".format(defi,exs))
 
                 if type == "organic_result":
                     if 'link' in answer_box.keys():
-                        res = answer_box["list"] #array
+                        res = answer_box["link"] #array
                     elif 'snippet' in answer_box.keys():
                         res = list(answer_box["snippet"]) #array
-                    print(res)
+                    tts.speak(res)
                 if type == 'translation_result':
                     res = answer_box["translation"]["target"]["text"]
-                    print(res)
-            openLink(text)
+                    tts.speak(res)
+            else: 
+                tts.speak("Đây là những gì tôi tìm được.")
+            
 
 
 def openLink(text):

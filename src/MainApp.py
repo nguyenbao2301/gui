@@ -1,3 +1,4 @@
+from cgitb import reset
 import tkinter as tk
 from PIL import Image,ImageTk
 from src.KeywordThread import KeywordThread
@@ -19,10 +20,7 @@ class MainApp(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        controller.overrideredirect(True)
-        controller.wm_attributes("-topmost",True)
-        controller.wm_attributes("-transparent","beige")
-        controller.config(bg = "beige")
+        
 
         self.sensitivity = config.get('main','sensitivity')
         self.pattern_dir = config.get('main','pattern_dir')
@@ -62,6 +60,9 @@ class MainApp(tk.Frame):
        
 
         controller.overrideredirect(True)
+        controller.wm_attributes("-topmost",True)
+        controller.wm_attributes("-transparent","beige")
+        controller.config(bg = "beige")
         self.menu_opened = False
 
         
@@ -95,18 +96,22 @@ class MainApp(tk.Frame):
 
     def process(self):
         print(self.menu_opened)
-        if self.menu_opened == False:
-            self.grip.configure(image=self.img2)
-            self.grip.image = self.img2
-            self.grip.update()
+        if self.grip.image == self.img: #Not already active
+            if self.menu_opened == False:
+                self.grip.configure(image=self.img2)
+                self.grip.image = self.img2
+                self.grip.update()
+                # self.grip.after(500,self.resetImg)
+                recognize(self,self.recognizer,self.microphone,self.idsf)
+                self.resetImg()
+                # time.sleep(2)
+                
 
-            recognize(self,self.recognizer,self.microphone,self.idsf)
-
-            # time.sleep(2)
-            self.grip.configure(image=self.img)
-            self.grip.image = self.img
-            self.grip.update()
-
+    def resetImg(self):
+        #  if self.grip.image != self.img: #Not already active
+                self.grip.configure(image=self.img)
+                self.grip.image = self.img
+                self.grip.update()
 
     def setSize(self,w,h):
         if w< 50:
