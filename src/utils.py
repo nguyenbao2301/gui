@@ -1,6 +1,6 @@
 from PIL import ImageEnhance
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog,messagebox
 import os
 from model import JointPhoBERT
 from transformers import (
@@ -10,10 +10,17 @@ from transformers import (
 import logging
 import numpy as np
 import soundfile as sf
+from audioplayer import AudioPlayer
 
+
+def PlaySound(file,volume):
+    volume = int(volume)
+    a = AudioPlayer(file)
+    a.volume = volume
+    a.play(block=True)
 
 def reduceOpacity(img,opacity):
-    if img.mode != 'RGBA':
+    if hasattr(img,"mode") and img.mode != 'RGBA':
         i = img.convert('RGBA')
     else:
         i = img.copy()
@@ -29,7 +36,7 @@ def browse(callback,init):
     callback(curDir = filename)
 
 def clearDir(directory):
-    if  tk.messagebox.askyesno("Confirmation","Clear all keywords?\nYou will have to record new ones."):
+    if  messagebox.askyesno("Confirmation","Clear all keywords?\nYou will have to record new ones."):
         for filename in os.listdir(directory):
             file_path = os.path.join(directory, filename)
             try:
@@ -38,7 +45,7 @@ def clearDir(directory):
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e)) 
 def restartThread():
-    tk.messagebox.showinfo(message= "This change will take effect after a program restart.")
+    messagebox.showinfo(message= "This change will take effect after a program restart.")
 
 
 MODEL_CLASSES = {

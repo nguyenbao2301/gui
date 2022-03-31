@@ -20,8 +20,6 @@ class MainApp(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        
-
         self.sensitivity = config.get('main','sensitivity')
         self.pattern_dir = config.get('main','pattern_dir')
         self.img_path = config.get('main','img')
@@ -32,15 +30,26 @@ class MainApp(tk.Frame):
         self.idsf = IDSF()
 
         w,h = int(config.get("main","width")),int(config.get("main","height"))
-        self.setSize(w,h)
+        
+        img= (Image.open(self.img_path))
+        img= img.resize((w,h), Image.ANTIALIAS)
+        img = reduceOpacity(img,float(0.01*float(config.get('main','img_opacity'))))
+        self.img= ImageTk.PhotoImage(img)
 
+        img2= (Image.open(self.img2_path))
+        img2= img2.resize((w,h), Image.ANTIALIAS)
+        self.img2= ImageTk.PhotoImage(img2)
+
+       
 
         self.grip = tk.Label(self,image=self.img,bg = 'beige')
         self.grip.image = self.img
         self.grip.pack(side="left", fill="both",expand=True)
 
-
-
+        
+        
+        self.setSize(w,h)
+         
         self.grip.bind("<ButtonPress-1>", self.start_move)
         self.grip.bind("<ButtonRelease-1>", self.stop_move)
         self.grip.bind("<B1-Motion>", self.do_move)
@@ -64,6 +73,8 @@ class MainApp(tk.Frame):
         controller.wm_attributes("-transparent","beige")
         controller.config(bg = "beige")
         self.menu_opened = False
+
+        
 
         
 
@@ -131,6 +142,8 @@ class MainApp(tk.Frame):
         img2= (Image.open(self.img2_path))
         img2= img2.resize((w,h), Image.ANTIALIAS)
         self.img2= ImageTk.PhotoImage(img2)
+
+        self.resetImg()
 
     def setTimer(self,_time):
         temp  = _time.split(':')

@@ -150,7 +150,15 @@ class MusicService(Service):
         print("query: ",query)
         return query
     def searchQuery(self,query):
-        search(query)
+        while True:
+            result = YoutubeSearch(query, max_results=10).to_dict()
+            if result:
+                break
+
+        url = 'https://www.youtube.com' + result[0]['url_suffix']
+        return url
+
+
 
     def play(self,url):
         try:
@@ -201,7 +209,8 @@ def recognize(master,recognizer,microphone,idsf):
         ASRBubble(master,text)
             # processor.process(response.lower())
     else:
-        ASRBubble(master,"Sorry, I didn't quite get that")     
+        ASRBubble(master,"Xin lỗi, tôi không nghe rõ câu đó")  
+        TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")   
 
 def extract(text,labels):
     content = ""
@@ -295,7 +304,7 @@ def search(text):
                     day = answer_box['date']
                     weather = answer_box['weather']
                     humid = answer_box['humidity']
-                    tts.speak("{} ngày {} {}, nhiệt độ {} độ, độ ẩm {}%".format(location,day,weather,temp,humid))
+                    tts.speak("{} ngày {} {}, nhiệt độ {}, độ ẩm {}".format(location,day,weather,temp,humid))
                 if type == "calculator_result":
                     res = answer_box['result']
                     tts.speak(res)
@@ -374,7 +383,7 @@ def formatDate(day):
         temp = day.split() #X ngày nữa
         offset = int(temp[0])
         new_date = datetime.now() + timedelta(days = offset)
-    new_date = new_date.strftime("%d/%m") if new_date!= "" else ""
+    new_date = new_date.strftime("%d/%m") if new_date!= "" else day
     print(new_date)
     return new_date
 

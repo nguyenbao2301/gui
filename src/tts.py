@@ -1,16 +1,17 @@
-import pyttsx3
+from gtts import gTTS
+import os
+from src.utils import PlaySound
 
+from configparser import ConfigParser
+config = ConfigParser()
+config.read('config.ini')
 class TTS():
 
     def __init__(self):
-        self.engine = pyttsx3.init()
-         # engine.setProperty('rate',135)
-        voices = self.engine.getProperty('voices') 
-        self.engine.setProperty('voice', voices[1].id) 
-        self.engine.setProperty('volume', 0.5)
+        self.volume = config.get('main','tts_volume')
 
     def speak(self,text):
-        engine = self.engine
-        print(text)
-        engine.say(text)
-        engine.runAndWait()
+        tts = gTTS(text,lang = 'vi')
+        path = os.path.join(config.get('main','temp_dir'),'tts_temp.mp3')
+        tts.save(path)
+        PlaySound(path,self.volume)

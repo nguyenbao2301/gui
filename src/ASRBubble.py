@@ -5,7 +5,7 @@ class ASRBubble(tk.Toplevel):
     def __init__(self, master =None,text = ""):
         super().__init__(master = master)
         self.master = master
-
+        self.master.controller.overrideredirect(True)
 
         x = self.master.controller.winfo_x()
         y = self.master.controller.winfo_y()
@@ -33,6 +33,7 @@ class ASRBubble(tk.Toplevel):
 
     def close(self,*args):
         self.destroy()
+        self.master.controller.overrideredirect(True)
         return  
 
 # def recognize(master,recognizer,microphone,idsf):

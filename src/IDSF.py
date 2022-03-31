@@ -19,6 +19,7 @@ def load_model(model_dir, args, device):
         )
         model.to(device)
         model.eval()
+        print("model loaded")
         # logger.info("***** Model Loaded *****")
     except Exception:
         raise Exception("Some model files might be missing...")
@@ -105,9 +106,8 @@ def convert_input_to_tensor_dataset(
 class IDSF():
     def __init__(self):
         self.model_dir = "./IDSF/model"
-        self.no_cuda = False
         self.args = torch.load(os.path.join(self.model_dir, "training_args.bin"))
-        self.device = "cuda" if torch.cuda.is_available() and not self.no_cuda else "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = load_model(self.model_dir,self.args,self.device)
         self.intent_label_lst = get_intent_labels(self.args)
         self.slot_label_lst = get_slot_labels(self.args)
@@ -139,34 +139,34 @@ class IDSF():
         all_slot_label_mask = None
         intent_preds = None
         slot_preds = None
+        with torch.no_grad():
+            for batch in tqdm(data_loader, desc="Predicting"):
+                batch = tuple(t.to(self.device) for t in batch)
+                with torch.no_grad():
+                    inputs = {
+                        "input_ids": batch[0],
+                        "attention_mask": batch[1],
+                        "intent_label_ids": None,
+                        "slot_labels_ids": None,
+                    }
+                    if self.args.model_type != "distilbert":
+                        inputs["token_type_ids"] = batch[2]
+                    outputs = self.model(**inputs)
+                    _, (intent_logits, slot_logits) = outputs[:2]
 
-        for batch in tqdm(data_loader, desc="Predicting"):
-            batch = tuple(t.to(self.device) for t in batch)
-            with torch.no_grad():
-                inputs = {
-                    "input_ids": batch[0],
-                    "attention_mask": batch[1],
-                    "intent_label_ids": None,
-                    "slot_labels_ids": None,
-                }
-                if self.args.model_type != "distilbert":
-                    inputs["token_type_ids"] = batch[2]
-                outputs = self.model(**inputs)
-                _, (intent_logits, slot_logits) = outputs[:2]
+                    # Intent Prediction
+                    if intent_preds is None:
+                        intent_preds = intent_logits.detach().cpu().numpy()
+                    else:
+                        intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
 
-                # Intent Prediction
-                if intent_preds is None:
-                    intent_preds = intent_logits.detach().cpu().numpy()
-                else:
-                    intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
-
-                # Slot prediction
-                if slot_preds is None:
-                    slot_preds = slot_logits.detach().cpu().numpy()
-                    all_slot_label_mask = batch[3].detach().cpu().numpy()
-                else:
-                    slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
-                    all_slot_label_mask = np.append(all_slot_label_mask, batch[3].detach().cpu().numpy(), axis=0)
+                    # Slot prediction
+                    if slot_preds is None:
+                        slot_preds = slot_logits.detach().cpu().numpy()
+                        all_slot_label_mask = batch[3].detach().cpu().numpy()
+                    else:
+                        slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
+                        all_slot_label_mask = np.append(all_slot_label_mask, batch[3].detach().cpu().numpy(), axis=0)
 
         print("og: \n",intent_preds)
         # intent_preds_softmax = softmax(intent_preds,axis = 1)
