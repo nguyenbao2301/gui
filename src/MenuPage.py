@@ -1,13 +1,9 @@
-
-from email.mime import image
-from textwrap import fill
 import tkinter as tk
 from tkinter import messagebox
 import time
 import os
-from turtle import right
 from PIL import Image,ImageTk
-from src.utils import reduceOpacity,restartThread,browse,clearDir,PlaySound
+from src.utils import reduceOpacity,restartThread,browse,PlaySound
 from src.KeywordThread import KeywordThread
 from src.RecordPage import RecordToplevel
 from tkinter import filedialog

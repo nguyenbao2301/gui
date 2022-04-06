@@ -84,13 +84,15 @@ def calc(wave,sr,patterns,sensitivity):
     # _mfcc = mfcc(wave,sr)
     for pattern in patterns:
         # dis = dtw(pattern,mfcc)
-        dis = DTW.dtw(pattern,mfcc,distance_only=True,dist_method = "cosine")
-        # print(dis.distance ,end = '\t')
-        # print(dis.normalizedDistance*100,end= '\r')
-        if dis.normalizedDistance*100 < sensitivity:
-        # if dis.distance < sensitivity:
-            return True
+        try:
+            dis = DTW.dtw(pattern,mfcc,dist_method = "cosine",distance_only=True,open_end=True)
+            # print(dis.normalizedDistance*100)
+            if dis.normalizedDistance*100 < sensitivity:
+                return True
+        
             # pass
+        except Exception:
+            continue
     return False
 
 def main(args):
@@ -151,5 +153,5 @@ def DTWloop(func):
                         frames = []
                         count = 0
                         func()
-                        time.sleep(0.5)
+                        time.sleep(1.5)
                     
