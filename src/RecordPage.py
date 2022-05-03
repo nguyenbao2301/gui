@@ -1,4 +1,5 @@
 from playsound import playsound
+from tkinter import font as tkfont
 import time
 from datetime import datetime
 import tkinter as tk              
@@ -19,40 +20,39 @@ class RecordPage(tk.Frame):
 
         
 
-        self.grid_columnconfigure(0, weight=1)
-        
+        self.grid_columnconfigure(0, weight=3)
+        self.grid_columnconfigure(2, weight=1)
+        self.font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
         self.frame = tk.Frame(self,height = 360,bg = "white")
         self.frame.pack_propagate(0)
-        self.label = tk.Label(self.frame,text="Press Record to start",bg = "SkyBlue1")
+        self.label = tk.Label(self.frame,text="Nhấn Ghi để bắt đầu",bg = "SkyBlue1",font = self.font)
 
-        self.recordButton = tk.Button(self,text = "Record {}/3".format(1),command= lambda: self.record_keyword(1,audio_queue))
-        self.listenButton = tk.Button(self, text="Listen back",command=self.listen,state="disabled")
-        self.nextButton = tk.Button(self, text="Next",
-                           command=lambda: controller.show_frame("TestingPage"),state="disabled")
-        # button.pack()
+        self.recordButton = tk.Button(self,text = "Ghi {}/3".format(1),command= lambda: self.record_keyword(1,audio_queue),relief=tk.GROOVE)
+        self.nextButton = tk.Button(self, text="Tiếp tục",
+                           command=lambda: controller.show_frame("TestingPage"),state="disabled",relief=tk.GROOVE)
         
         
         self.frame.grid(row=0,columnspan=3,sticky="new")
-        self.label.pack(side = "top",fill="both",expand = True)
+        self.label.pack(side = "top",fill="both",expand = True,padx=5,pady=5)
         self.recordButton.grid(row = 1,column=0,padx=5,sticky = "sew",pady=5)
-        self.listenButton.grid(row = 1,column=1,sticky="se",pady=5)
-        self.nextButton.grid(row=1,column=2,padx=5,sticky="se",pady=5)
+        #self.listenButton.grid(row = 1,column=1,sticky="se",pady=5)
+        self.nextButton.grid(row=1,column=2,padx=5,sticky="sew",pady=5)
 
         clearTemp("temp")
-        tk.messagebox.showinfo(title = "Keyword setup",message = "You can use this program with any keyword you like.\nTo set up a keyword, record yourself saying it 3 times.")
+        tk.messagebox.showinfo(title = "Thêm từ khóa mới",message = "Để sử dụng chương trình, trước hết bạn cần đặt một từ khóa.\nBạn có thể chọn bất kì từ khóa nào mình thích.\nĐể thêm từ khóa mới, nhấn nút Ghi và nói từ khóa của bạn 3 lần.")
 
     def record_keyword(self,index,queue):
         controller = self.controller
         success = False
-        fin = False
         global config
         directory = config.get('main','temp_dir')
         final_dir = config.get('main','pattern_dir')
 
         #update label
-        self.label.config(bg="lime green",text="Recording")
+        self.label.config(bg="lime green",text="Đang ghi âm ...",fg="white")
         self.label.update()
-
+        self.recordButton.config(state=tk.DISABLED)
+        self.recordButton.update()
 
         if(index ==1):
             clearTemp("temp")
@@ -60,21 +60,21 @@ class RecordPage(tk.Frame):
         audio = record_one(directory,index)  
         status = validate(index,queue)
         if(status == 0 ): #valid record
-            self.label.config(bg="SkyBlue1",text="Audio recorded successfully ({}/3)".format(index))
+            self.label.config(bg="SkyBlue1",text="Ghi âm thành công ({}/3)".format(index),fg="black")
             self.label.update()
             
 
             if index<3:
                 
-                # recordButton = tk.Button(frame,text = "Record {}/3".format(index+1),command=lambda: record_keyword(frame,index+1,queue,label))
+                # recordButton = tk.Button(frame,text = "Ghi {}/3".format(index+1),command=lambda: record_keyword(frame,index+1,queue,label))
                 # recordButton.grid(row = 1,column=0,sticky='e')
-                self.recordButton.config(text = "Record {}/3".format(index+1),command=lambda: self.record_keyword(index+1,queue))
+                self.recordButton.config(text = "Ghi {}/3".format(index+1),command=lambda: self.record_keyword(index+1,queue))
                 time.sleep(1)
-                self.label.config(bg="SkyBlue1",text="Press Record to start")
+                self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="white")
                 self.label.update()
             else:
                 time.sleep(1)
-                self.label.config(bg="SkyBlue1",text="Press Next to continue.\nListen to hear playbacks.\nRecord to try again.".format(index))
+                self.label.config(bg="SkyBlue1",text="Ghi âm hoàn tất\nVui lòng nhấn Tiếp tục".format(index))
                 self.label.update()
                 for i, audio in enumerate(queue):
                     dest_path = os.path.join(final_dir, "{}.wav".format(datetime.now().timestamp()))
@@ -83,60 +83,34 @@ class RecordPage(tk.Frame):
                 self.nextButton.config(state=tk.NORMAL)
                 self.nextButton.update()
                 
-                self.recordButton.config(text = "Record {}/3".format(index),command=lambda: self.record_keyword(index,queue))
+                self.recordButton.config(text = "Ghi {}/3".format(index),command=lambda: self.record_keyword(index,queue))
                 self.recordButton.update()
 
         elif(status == 1): #all invalid, reset
-            self.label.config(bg="tomato3",text="Audio records are inconsistent.\n Please try again.",fg="white")
+            self.label.config(bg="tomato3",text="Các bản ghi âm quá khác nhau\nVui lòng thử lại",fg="white")
             self.label.update()
             queue = []
-            self.recordButton.config(text = "Record {}/3".format(1),command=self.record_keyword(1,queue))
+            self.recordButton.config(text = "Ghi {}/3".format(1),command=self.record_keyword(1,queue))
             self.recordButton.update()
 
             time.sleep(1)
-            self.label.config(bg="SkyBlue1",text="Press Record to start")
+            self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="black")
             self.label.update()
             
             
         else: #invalid record
-            self.label.config(bg="tomato3",text="There's too much noise.\n Please try again.",fg="white")
+            self.label.config(bg="tomato3",text="Có quá nhiều tiếng ồn\nVui lòng thử lại.",fg="white")
             self.label.update()
-            self.recordButton.config(text = "Record {}/3".format(index),command=lambda: self.record_keyword(index,queue))
+            self.recordButton.config(text = "Ghi {}/3".format(index),command=lambda: self.record_keyword(index,queue))
             self.recordButton.update()
 
             time.sleep(1)
-            self.label.config(bg="SkyBlue1",text="Press Record to start")
+            self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="black")
             self.label.update()
 
-        #unlock listen 
-        if(fin == False):
-            self.listenButton.config(state=tk.NORMAL)
-            self.listenButton.update()
-            fin = True
-        return
+        self.recordButton.config(state=tk.NORMAL)
+        self.recordButton.update()            
 
-    def listen(self):
-        directory = config.get('main','temp_dir')
-        dir = os.listdir(directory)
-        p = path = os.path.join(directory,"wakeword_temp.wav")
-        m = min(4,len(dir))
-        if os.path.exists(p):
-            m = m -1
-        if m == 0:
-            self.label.config(bg="tomato3",text="Nothing to play. Record something first.")
-            self.label.update()
-            return
-        for i in range(m):
-            self.label.config(bg="yellow2",text="Playing back ({}/{})".format(i+1,m))
-            self.label.update()
-            path = os.path.join(directory,"{0}.wav".format(i+1))
-            if(os.path.exists(path)):
-                playsound(path)
-            time.sleep(0.5)
-        time.sleep(1)
-        self.label.config(bg="SkyBlue1",text="Press Record to start")
-        self.label.update()
-        return
     def on_switch(self):
         return
 
@@ -144,7 +118,7 @@ class RecordToplevel(tk.Toplevel):
     def __init__(self, master =None):
         super().__init__(master = master)
         # print("B")
-        self.title("Record Keyword")
+        self.title("Ghi âm từ khóa mới")
         self.geometry("400x400")
         self.master = master
         self.protocol("WM_DELETE_WINDOW", self.close)
@@ -153,23 +127,26 @@ class RecordToplevel(tk.Toplevel):
         global config
         self.grid_columnconfigure(0, weight=1)
         
+        
+
+        self.grid_columnconfigure(0, weight=3)
+        self.grid_columnconfigure(2, weight=1)
+        self.font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
         self.frame = tk.Frame(self,height = 360,bg = "white")
         self.frame.pack_propagate(0)
-        self.label = tk.Label(self.frame,text="Press Record to start",bg = "SkyBlue1")
+        self.label = tk.Label(self.frame,text="Nhấn Ghi để bắt đầu",bg = "SkyBlue1",font = self.font)
 
-        self.recordButton = tk.Button(self,text = "Record {}/3".format(1),command= lambda: self.record_keyword(1,audio_queue))
-        self.listenButton = tk.Button(self, text="Listen back",command=self.listen,state="disabled")
-        self.nextButton = tk.Button(self, text="Finish",
-                           command=self.close,state="disabled")
-        # button.pack()
+        self.recordButton = tk.Button(self,text = "Ghi {}/3".format(1),command= lambda: self.record_keyword(1,audio_queue),relief=tk.GROOVE)
+        self.nextButton = tk.Button(self, text="Hoàn thành",
+                           command=lambda: self.close(),state="disabled",relief=tk.GROOVE)
         
         
         self.frame.grid(row=0,columnspan=3,sticky="new")
-        self.label.pack(side = "top",fill="both",expand = True)
+        self.label.pack(side = "top",fill="both",expand = True,padx=5,pady=5)
         self.recordButton.grid(row = 1,column=0,padx=5,sticky = "sew",pady=5)
-        self.listenButton.grid(row = 1,column=1,sticky="se",pady=5)
-        self.nextButton.grid(row=1,column=2,padx=5,sticky="se",pady=5)
-
+        #self.listenButton.grid(row = 1,column=1,sticky="se",pady=5)
+        self.nextButton.grid(row=1,column=2,padx=5,sticky="sew",pady=5)
+        tk.messagebox.showinfo(title = "Thêm từ khóa mới",message = "Để thêm từ khóa mới, nhấn nút Ghi và nói từ khóa của bạn 3 lần.\nBạn có thể chọn bất kì từ khóa nào mình thích.")
         clearTemp("temp")
 
     def close(self,*args):
@@ -184,9 +161,10 @@ class RecordToplevel(tk.Toplevel):
         final_dir = config.get('main','pattern_dir')
 
         #update label
-        self.label.config(bg="lime green",text="Recording")
+        self.label.config(bg="lime green",text="Đang ghi âm ...",fg="white")
         self.label.update()
-
+        self.recordButton.config(state=tk.DISABLED)
+        self.recordButton.update()
 
         if(index ==1):
             clearTemp("temp")
@@ -194,20 +172,21 @@ class RecordToplevel(tk.Toplevel):
         audio = record_one(directory,index)  
         status = validate(index,queue)
         if(status == 0 ): #valid record
-            self.label.config(bg="SkyBlue1",text="Audio recorded successfully ({}/3)".format(index))
+            self.label.config(bg="SkyBlue1",text="Ghi âm thành công ({}/3)".format(index),fg="black")
             self.label.update()
             
+
             if index<3:
                 
-                # recordButton = tk.Button(frame,text = "Record {}/3".format(index+1),command=lambda: record_keyword(frame,index+1,queue,label))
+                # recordButton = tk.Button(frame,text = "Ghi {}/3".format(index+1),command=lambda: record_keyword(frame,index+1,queue,label))
                 # recordButton.grid(row = 1,column=0,sticky='e')
-                self.recordButton.config(text = "Record {}/3".format(index+1),command=lambda: self.record_keyword(index+1,queue))
+                self.recordButton.config(text = "Ghi {}/3".format(index+1),command=lambda: self.record_keyword(index+1,queue))
                 time.sleep(1)
-                self.label.config(bg="SkyBlue1",text="Press Record to start")
+                self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="white")
                 self.label.update()
             else:
                 time.sleep(1)
-                self.label.config(bg="SkyBlue1",text="Press Next to continue.\nListen to hear playbacks.\nRecord to try again.".format(index))
+                self.label.config(bg="SkyBlue1",text="Ghi âm hoàn tất\nNhấn Hoàn thành để đóng".format(index))
                 self.label.update()
                 for i, audio in enumerate(queue):
                     dest_path = os.path.join(final_dir, "{}.wav".format(datetime.now().timestamp()))
@@ -216,36 +195,34 @@ class RecordToplevel(tk.Toplevel):
                 self.nextButton.config(state=tk.NORMAL)
                 self.nextButton.update()
                 
-                self.recordButton.config(text = "Record {}/3".format(index),command=lambda: self.record_keyword(index,queue))
+                self.recordButton.config(state= tk.DISABLED)
                 self.recordButton.update()
 
         elif(status == 1): #all invalid, reset
-            self.label.config(bg="tomato3",text="Audio records are inconsistent.\n Please try again.",fg="white")
+            self.label.config(bg="tomato3",text="Các bản ghi âm quá khác nhau\nVui lòng thử lại",fg="white")
             self.label.update()
-
             queue = []
-            self.recordButton.config(text = "Record {}/3".format(1),command=self.record_keyword(1,queue))
+            self.recordButton.config(text = "Ghi {}/3".format(1),command=self.record_keyword(1,queue))
             self.recordButton.update()
 
             time.sleep(1)
-            self.label.config(bg="SkyBlue1",text="Press Record to start")
+            self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="black")
             self.label.update()
             
             
         else: #invalid record
-            self.label.config(bg="tomato3",text="There's too much noise.\n Please try again.",fg="white")
+            self.label.config(bg="tomato3",text="Có quá nhiều tiếng ồn\nVui lòng thử lại.",fg="white")
             self.label.update()
-            self.recordButton.config(text = "Record {}/3".format(index),command=lambda: self.record_keyword(index,queue))
+            self.recordButton.config(text = "Ghi {}/3".format(index),command=lambda: self.record_keyword(index,queue))
             self.recordButton.update()
 
             time.sleep(1)
-            self.label.config(bg="SkyBlue1",text="Press Record to start")
+            self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu",fg="black")
             self.label.update()
-        #unlock listen 
-        if(fin == False):
-            self.listenButton.config(state=tk.NORMAL)
-            self.listenButton.update()
-            fin = True
+
+        self.recordButton.config(state=tk.NORMAL)
+        self.recordButton.update()    
+        
         return
 
     def listen(self):
@@ -268,7 +245,7 @@ class RecordToplevel(tk.Toplevel):
             time.sleep(0.5)
         
         time.sleep(1)
-        self.label.config(bg="SkyBlue1",text="Press Record to start")
+        self.label.config(bg="SkyBlue1",text="Nhấn Ghi để bắt đầu")
         self.label.update()
         return
     def on_switch(self):

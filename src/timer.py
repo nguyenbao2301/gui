@@ -16,8 +16,7 @@ class TimerThread(threading.Thread):
         self.target = target
         self.total = 3600*h + 60*m + s
         print(h,m,s,self.total)
-        ASRBubble(self.target,text="Timer set for {}:{}:{}".format(h,m,s))
-
+        
 
         img_path = "./img/alarm_overlay.png"
         w,h = int(config.get("main","width")),int(config.get("main","height"))

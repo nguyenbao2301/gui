@@ -41,7 +41,7 @@ class TestingPage(tk.Frame):
         self.label = tk.Label(self.frameL,justify="left",bg="white",text = "Try saying your keyword and some other things.\nThe panel on the right will change color when it detects something.\nAdjust the sensitivity so that only keywords are detected.",wraplength=180)
 
         button_next = tk.Button(self,text="Finish",command = lambda: controller.show_frame("FinishPage"),relief=tk.GROOVE)
-        self.slider = tk.Scale(self,from_= 0, to=5.0, orient="horizontal",variable=self.sensitivity,resolution=0.1,length=350)
+        self.slider = tk.Scale(self,from_= 0, to=10.0, orient="horizontal",variable=self.sensitivity,resolution=0.1,length=350)
 
         self.sensitivity.trace("w",self.update)
 

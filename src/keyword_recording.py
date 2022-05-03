@@ -8,7 +8,9 @@ import time
 import pyaudio
 import wave
 from src.utils import Audio
-
+from scipy.io import wavfile
+import noisereduce as nr
+import numpy as np
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -45,15 +47,31 @@ def record_one(directory, i):
     stream.stop_stream()
     stream.close()
     audio.terminate()
+    while(True):
+        try:
+            waveFile = wave.open(dest_path, 'wb')
+            waveFile.setnchannels(CHANNELS)
+            waveFile.setsampwidth(2)
+            waveFile.setframerate(RATE)
+            waveFile.writeframes(b''.join(frames))
+            waveFile.close()
+            break
+        except Exception:
+            pass
 
-    waveFile = wave.open(dest_path, 'wb')
-    waveFile.setnchannels(CHANNELS)
-    waveFile.setsampwidth(2)
-    waveFile.setframerate(RATE)
-    waveFile.writeframes(b''.join(frames))
-    waveFile.close()
-
-
+    noisereduction(directory,i)
+def noisereduction(dir,i):
+    inp_path = os.path.join(dir, "{0}.wav".format(i))
+    sample_rate,data = wavfile.read(inp_path)
+    dest_path = os.path.join(dir, "{0}.wav".format(i))
+    data = nr.reduce_noise(data,sr=sample_rate)
+    while(True):
+        try:
+            wavfile.write(dest_path, RATE, data.astype(np.int16))
+            break
+        except Exception:
+            pass
+    return dest_path  
 def check_audios(durations):
     if any([d > MAX_RECORD_DURATION for d in durations]):
         print("WARNING: at least one your record seems to have a too long " \

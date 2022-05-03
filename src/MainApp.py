@@ -79,7 +79,7 @@ class MainApp(tk.Frame):
         
 
     def test(self,*args):
-        ASRBubble(self,text= "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa")
+        self.process()
 
     def start_move(self, event):
         self.controller.x = event.x
@@ -119,10 +119,26 @@ class MainApp(tk.Frame):
                 
 
     def resetImg(self):
+        config.read('config.ini')
+        w,h = int(config.get("main","width")),int(config.get("main","height"))
+
+
+        self.img_path = config.get('main','img')
+        self.img2_path = config.get('main','img2')
+
+        img= (Image.open(self.img_path))
+        img= img.resize((w,h), Image.ANTIALIAS)
+        img = reduceOpacity(img,float(0.01*float(config.get('main','img_opacity'))))
+        self.img= ImageTk.PhotoImage(img)
+
+        img2= (Image.open(self.img2_path))
+        img2= img2.resize((w,h), Image.ANTIALIAS)
+        self.img2= ImageTk.PhotoImage(img2)
+
         #  if self.grip.image != self.img: #Not already active
-                self.grip.configure(image=self.img)
-                self.grip.image = self.img
-                self.grip.update()
+        self.grip.configure(image=self.img)
+        self.grip.image = self.img
+        self.grip.update()
 
     def setSize(self,w,h):
         if w< 50:
@@ -133,15 +149,6 @@ class MainApp(tk.Frame):
         controller.geometry("{}x{}".format(w,h))
         controller.minsize(w,h)
         controller.maxsize(w,h)
-
-        img= (Image.open(self.img_path))
-        img= img.resize((w,h), Image.ANTIALIAS)
-        img = reduceOpacity(img,float(0.01*float(config.get('main','img_opacity'))))
-        self.img= ImageTk.PhotoImage(img)
-
-        img2= (Image.open(self.img2_path))
-        img2= img2.resize((w,h), Image.ANTIALIAS)
-        self.img2= ImageTk.PhotoImage(img2)
 
         self.resetImg()
 

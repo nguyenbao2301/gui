@@ -12,6 +12,7 @@ class TTS():
 
     def speak(self,text):
         tts = gTTS(text,lang = 'vi')
+        print(text)
         path = os.path.join(config.get('main','temp_dir'),'tts_temp.mp3')
         tts.save(path)
         PlaySound(path,self.volume)

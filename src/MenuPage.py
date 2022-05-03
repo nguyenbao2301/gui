@@ -236,7 +236,7 @@ class Keyword(tk.Frame):
         self.sensitivityFrameL = tk.Label(self.sensitivityFrame,image=self.img)
         self.sensitivityFrameL.image = self.img
         self.sensitivityFrameL.pack(fill="both",expand=True)
-        self.sensitivitySlider = tk.Scale(self.sensitivityTitle,from_= 0, to=5.0, orient="horizontal",variable=self.sensitivity,resolution=0.1,length=250)
+        self.sensitivitySlider = tk.Scale(self.sensitivityTitle,from_= 0, to=10.0, orient="horizontal",variable=self.sensitivity,resolution=0.1,length=250)
 
         self.sensitivityTitle.grid(row=1,column=0,padx=10,pady=10,sticky="ew",ipadx=10)
         self.sensitivitySlider.grid(row=0,column=0,padx=10,pady=10,sticky="new")
@@ -493,7 +493,7 @@ class MenuPage(tk.Toplevel):
     def __init__(self, master =None):
         super().__init__(master = master)
         
-        self.title("New Window")
+        self.title("Cài đặt")
         self.geometry("700x600")
         global curMenu
         self.master = master
@@ -599,7 +599,16 @@ class MenuPage(tk.Toplevel):
         self.destroy()
 
     def exit(self,*args):
-        if messagebox.askyesno("Confirmation","Exit the program?"):
+        
+        if messagebox.askyesno("Xác nhận","Bạn có muốn đóng chương trình?"):
             self.master.quit()
             self.destroy()
+        # messageWindow(self.master)
 
+def messageWindow(master):
+    win = tk.Toplevel()
+    win.title('Xác nhận')
+    message = "Bạn có muốn đóng chương trình?"
+    tk.Label(win, text=message).pack()
+    tk.Button(win, text='Có', command=master.quit).pack()
+    tk.Button(win, text='Không', command=win.destroy).pack()

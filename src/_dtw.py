@@ -53,13 +53,9 @@ def loadPatterns(path):
         # print(file)
         if  file.endswith('.wav'):
             wave,sr = sf.read(os.path.join(path,file),dtype="int16")
-            # print(wave)
-            wave = nr.reduce_noise(wave,sr=sr,n_fft=512,prop_decrease=0.2 )
             mfcc = mfcc_spec(wave,sr,stride,fft_size,num_filt,num_coeffs)
             # _mfcc = mfcc(wave,sr)
             avg_len += len(wave)
-            # mfcc = librosa.feature.mfcc(wave,sr,n_mfcc=40,hop_length=int(0.010*sr), n_fft=int(0.025*sr))
-            # print(wave,wave.shape )
 
             temp.append(mfcc)
     # print(avg_len/(len(dir)))
@@ -85,9 +81,10 @@ def calc(wave,sr,patterns,sensitivity):
     for pattern in patterns:
         # dis = dtw(pattern,mfcc)
         try:
-            dis = DTW.dtw(pattern,mfcc,dist_method = "cosine",distance_only=True,open_end=True)
-            # print(dis.normalizedDistance*100)
-            if dis.normalizedDistance*100 < sensitivity:
+            # dis = DTW.dtw(pattern,mfcc,distance_only=True,open_end=True,window_type ="sakoechiba",window_args ={"window_size":30})
+            dis = DTW.dtw(pattern,mfcc,distance_only=True,open_end=True)
+            # print(dis.normalizedDistance,end='\r')
+            if dis.normalizedDistance < sensitivity:
                 return True
         
             # pass
@@ -138,7 +135,7 @@ def DTWloop(func):
                 fname = listener.save_audio(frames)
                 try:
                     sr,wave = wavfile.read(fname)
-                    wave = nr.reduce_noise(wave,sr=sr,n_fft=512,prop_decrease=0.2 )
+                    wave = nr.reduce_noise(wave,sr=sr)
                     # print(wave.shape,end= "\r")
                     res = calc(wave,listener.sample_rate,patterns,sensitivity)
                 except Exception as e:
@@ -148,7 +145,7 @@ def DTWloop(func):
                         count+=1
                     else:
                         count = 0
-                    if count > 8:
+                    if count > 5:
                         print("Yes. How can I help you?",sensitivity)
                         frames = []
                         count = 0

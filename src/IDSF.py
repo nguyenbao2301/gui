@@ -1,3 +1,4 @@
+import imp
 from multiprocessing.dummy import Array
 import os
 
@@ -7,6 +8,7 @@ from torch.utils.data import DataLoader, SequentialSampler, TensorDataset
 from tqdm import tqdm
 from scipy.special import softmax
 from src.utils import MODEL_CLASSES, get_intent_labels, get_slot_labels, load_tokenizer
+from src.processor import extract
 
 def load_model(model_dir, args, device):
     # Check whether model exists
@@ -172,7 +174,26 @@ class IDSF():
         # intent_preds_softmax = softmax(intent_preds,axis = 1)
         # print("softmax: \n",intent_preds_softmax)
 
-        intent_preds = scoreBoost(intent_preds,text)
+        slot_preds = np.argmax(slot_preds, axis=2)
+
+        slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
+        slot_preds_list = [[] for _ in range(slot_preds.shape[0])]
+
+        for i in range(slot_preds.shape[0]):
+            for j in range(slot_preds.shape[1]):
+                if all_slot_label_mask[i, j] != pad_token_label_id:
+                    slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+
+        for words, slot_preds, intent_pred in zip(lines, slot_preds_list, intent_preds):
+                line = ""
+                for word, pred in zip(words, slot_preds):
+                    if pred == "O":
+                        line = line + word + " "
+                    else:
+                        line = line + "[{}:{}] ".format(word, pred)
+                # f.write("<{}> -> {}\n".format(self.intent_label_lst[intent_pred], line.strip()))
+
+        intent_preds = scoreBoost(intent_preds,text,slot_preds)
         intent_preds_max = np.argmax(intent_preds, axis=1)
 
         print("after: \n",intent_preds,intent_preds_max)
@@ -184,34 +205,21 @@ class IDSF():
         
         # print(intent_preds)
         
-        slot_preds = np.argmax(slot_preds, axis=2)
-
-        slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
-        slot_preds_list = [[] for _ in range(slot_preds.shape[0])]
-
-        for i in range(slot_preds.shape[0]):
-            for j in range(slot_preds.shape[1]):
-                if all_slot_label_mask[i, j] != pad_token_label_id:
-                    slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+       
 
         # Write to output file
         # with open(output_file, "a", encoding="utf-8") as f:
-        for words, slot_preds, intent_pred in zip(lines, slot_preds_list, intent_preds):
-                line = ""
-                for word, pred in zip(words, slot_preds):
-                    if pred == "O":
-                        line = line + word + " "
-                    else:
-                        line = line + "[{}:{}] ".format(word, pred)
-                # f.write("<{}> -> {}\n".format(self.intent_label_lst[intent_pred], line.strip()))
-        return text,self.intent_label_lst[intent_pred], slot_preds
+       
+        return text,self.intent_label_lst[intent_preds[0]], slot_preds
 
-def scoreBoost(arr,text):
+def scoreBoost(arr,text, slot_preds):
     #Boost prediction score for higher classification accuracy
-    songBoost = ['bài hát', 'bài nhạc', 'bài', 'ca khúc']
-    alarmBoost = ['báo thức']
-    timerBoost = ['hẹn giờ']
-    weatherBoost = ['thời tiết','trời','nắng','mưa']
+    songBoost = ['bài hát', 'bài nhạc', 'bài', 'ca khúc', 'phát', 'nhạc', 'giai điệu', 'tác phẩm', 'album','nghe' ,'bật','mở']
+    alarmBoost = ['báo thức', 'lúc', 'sáng', 'chiều', 'tối', 'mỗi', 'dậy']
+    timerBoost = ['hẹn giờ','sau','giờ','phút','giây','tiếng']
+    weatherBoost = ['thời tiết','trời','nắng','mưa','dự báo','gió','nóng','ẩm']
+
+    imax = np.argmax(arr, axis=1) if np.argmax(arr, axis=1)>=7.5 else 0
     #for play_song
     if any(filter(lambda i: i in text,songBoost)):
         arr[0,1] = arr[0,1]+1
@@ -221,11 +229,60 @@ def scoreBoost(arr,text):
     #for alarm
     elif any(filter(lambda i: i in text,alarmBoost)):
         arr[0,3] = arr[0,3]+1
-    #for play_song
+    #for weather
     elif any(filter(lambda i: i in text,weatherBoost)):
         arr[0,4] = arr[0,4]+1
     #no boost -> more likely to be unk
     else:
         for i in range(4):
             arr[0,i+1] = arr[0,i+1] - 0.5
+
+    for slot in slot_preds:
+        key = "" if slot == "O" else slot[2:]
+        if key in ['song_name','artist','album','genre']:
+            arr[0,1] = arr[0,1]+1
+            for x in range(1,5):
+                if imax==1:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x != 1:
+                    arr[0,x]  = arr[0,x]-1 
+                
+        if key in ['hour','minute','second']:
+            arr[0,2] = arr[0,2]+1
+            for x in range(1,5):
+                if imax==2:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x!=2: 
+                    arr[0,x]  = arr[0,x]-1 
+        if key in ['repeat']:
+            arr[0,3] = arr[0,3]+1
+            for x in range(1,5):
+                if imax==3:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x!=3:
+                    arr[0,x]  = arr[0,x]-1 
+        if key in ['time']:
+            arr[0,2] = arr[0,2]+1
+            arr[0,3] = arr[0,3]+1
+            for x in range(1,5):
+                if imax==3 or imax ==2:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x!= 2 and x!=3:
+                    arr[0,x]  = arr[0,x]-1 
+
+        if key in ['pod','relative','date_name','date_number','month']:
+            arr[0,3] = arr[0,3]+1
+            arr[0,4] = arr[0,4]+1
+            for x in range(1,5):
+                if imax==4 or imax == 3:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x!=3 and x!=4:
+                    arr[0,x]  = arr[0,x]-1 
+        if key in ['weather','location']:
+            arr[0,4] = arr[0,4]+1
+            for x in range(1,5):
+                if imax==4:
+                    arr[0,x]  = arr[0,x]-0.5 
+                elif x!=4:
+                    arr[0,x]  = arr[0,x]-1 
     return arr

@@ -2,11 +2,11 @@
 import tkinter as tk
 
 class ASRBubble(tk.Toplevel):
-    def __init__(self, master =None,text = ""):
+    def __init__(self, master,text = "",dur = 3000):
         super().__init__(master = master)
+        
         self.master = master
-        self.master.controller.overrideredirect(True)
-
+        self.text = text
         x = self.master.controller.winfo_x()
         y = self.master.controller.winfo_y()
         self.overrideredirect(True)
@@ -27,12 +27,13 @@ class ASRBubble(tk.Toplevel):
         self.frame.pack()        
         self.label = tk.Label(self.frame,text=text,wraplength = 160,justify="left")
         self.label.pack(fill='both',expand=True)
-        self.protocol("WM_DELETE_WINDOW", self.close)
-        self.after(3000, lambda: self.close())
+        print("created: ",text)
+        self.after(dur, lambda: self.close())
 
 
     def close(self,*args):
         self.destroy()
+        print("destroyed: ",self.text)
         self.master.controller.overrideredirect(True)
         return  
 
