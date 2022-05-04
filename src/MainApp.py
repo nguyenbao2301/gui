@@ -1,11 +1,9 @@
-from cgitb import reset
 import tkinter as tk
 from PIL import Image,ImageTk
 from src.KeywordThread import KeywordThread
 from src.MenuPage import MenuPage
 from src.utils import reduceOpacity
-from src.ASRBubble import ASRBubble
-from src.processor import recognize
+from src.processThread import processThread
 from src.IDSF import IDSF
 from src.alarm import AlarmThread
 from src.timer import TimerThread
@@ -113,8 +111,9 @@ class MainApp(tk.Frame):
                 self.grip.image = self.img2
                 self.grip.update()
                 # self.grip.after(500,self.resetImg)
-                recognize(self,self.recognizer,self.microphone,self.idsf)
-                self.resetImg()
+                r = processThread(self,self.recognizer,self.microphone,self.idsf)
+                r.start()
+                # self.resetImg()
                 # time.sleep(2)
                 
 
