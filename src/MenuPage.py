@@ -480,6 +480,19 @@ class SearchWeather(tk.Frame):
         self.locationFrame.grid(row=1,column=0,sticky= "ew",padx = 10,pady =10,ipadx=10,ipady=10)
         self.locationEntry.pack(fill="x",expand=True,padx=10)
 
+        self.browser = tk.StringVar(parent,"Mặc định") 
+        self.patternTitle = tk.LabelFrame(parent,text="Trình duyệt")
+        self.patternTitle.columnconfigure(0,weight=2)
+        self.patternTitle.columnconfigure(1,weight=1)
+        self.patternTitle.columnconfigure(2,weight=1)
+        self.patternEntry = tk.Entry(self.patternTitle,textvariable=self.browser,width=25)
+        self.patternButton = tk.Button(self.patternTitle,text="Mặc định",relief=tk.GROOVE)
+        self.patternClear = tk.Button(self.patternTitle,text="Chọn",relief=tk.GROOVE)
+
+        self.patternTitle.grid(row=2,column=0,padx=10,pady=10,sticky="ew",ipadx=10)
+        self.patternEntry.grid(row=0,column=0,padx=10,pady=10,sticky="sew")
+        self.patternButton.grid(row=0,column=1,padx=10,pady=10,sticky="sew")
+        self.patternClear.grid(row=0,column=2,padx=10,pady=10,sticky="sew")
 
 
     def changeEngine(self,*args):

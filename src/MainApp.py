@@ -42,20 +42,8 @@ class MainApp(tk.Frame):
 
         self.grip = tk.Label(self,image=self.img,bg = 'beige')
         self.grip.image = self.img
-        self.grip.pack(side="left", fill="both",expand=True)
 
         
-        
-        self.setSize(w,h)
-         
-        self.grip.bind("<ButtonPress-1>", self.start_move)
-        self.grip.bind("<ButtonRelease-1>", self.stop_move)
-        self.grip.bind("<B1-Motion>", self.do_move)
-
-        self.grip.bind('<Double-Button-1>', self.start)
-        self.grip.bind("<ButtonPress-3>", self.test )
-        
-
         self.thread = KeywordThread(self.process)
         self.thread.daemon = True
         self.thread.start()
@@ -71,6 +59,22 @@ class MainApp(tk.Frame):
         controller.wm_attributes("-transparent","beige")
         controller.config(bg = "beige")
         self.menu_opened = False
+
+        
+        self.grip.pack(side="left", fill="both",expand=True)
+
+        
+        
+        self.setSize(w,h)
+         
+        self.grip.bind("<ButtonPress-1>", self.start_move)
+        self.grip.bind("<ButtonRelease-1>", self.stop_move)
+        self.grip.bind("<B1-Motion>", self.do_move)
+
+        self.grip.bind('<Double-Button-1>', self.start)
+        self.grip.bind("<ButtonPress-3>", self.test )
+        
+
 
         
 

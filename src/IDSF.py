@@ -231,7 +231,7 @@ def scoreBoost(arr,text, slot_preds):
         arr[0,4] = arr[0,4]+1.5
     #no boost -> more likely to be unk
     else:
-        for x in range(1,5):
+        for x in range(5):
             arr[0,x] = arr[0,x] - 2
     imax = np.argmax(arr, axis=1) if np.argmax(arr, axis=1)>=10.0 else 0
     print("max:",imax,arr)
@@ -241,7 +241,7 @@ def scoreBoost(arr,text, slot_preds):
         key =  slot[2:] 
         if key in ['song_name','artist','album','genre']:
             arr[0,1] = arr[0,1]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==1:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x != 1:
@@ -249,14 +249,14 @@ def scoreBoost(arr,text, slot_preds):
                 
         if key in ['hour','minute','second']:
             arr[0,2] = arr[0,2]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==2:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x!=2: 
                     arr[0,x]  = arr[0,x]-1
         if key in ['repeat']:
             arr[0,3] = arr[0,3]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==3:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x!=3:
@@ -264,7 +264,7 @@ def scoreBoost(arr,text, slot_preds):
         if key in ['time']:
             arr[0,2] = arr[0,2]+1
             arr[0,3] = arr[0,3]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==3 or imax ==2:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x!= 2 and x!=3:
@@ -273,14 +273,14 @@ def scoreBoost(arr,text, slot_preds):
         if key in ['pod','relative','date_name','date_number','month']:
             arr[0,3] = arr[0,3]+1
             arr[0,4] = arr[0,4]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==4 or imax == 3:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x!=3 and x!=4:
                     arr[0,x]  = arr[0,x]-1 
         if key in ['weather','location']:
             arr[0,4] = arr[0,4]+1
-            for x in range(1,5):
+            for x in range(5):
                 if imax==4:
                     arr[0,x]  = arr[0,x]-0.5 
                 elif x!=4:
