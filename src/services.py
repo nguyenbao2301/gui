@@ -28,36 +28,65 @@ class AlarmTimerService(Service):
                 pod = arr["pod"]
 
             if "time" in arr.keys():
-                time = arr['time'] #"hh:mm" or "X giờ"
-                print("time: ",time)
-                if ':' not in time:
-                    h = time.split()[0]
-                    h = int(h) if h not in times.keys() else times[h]
-                    time = str(h) + ':00'
-                    
-                if pod not in ["sáng", "trưa",""]:
-                    time = time.split(":")
-                    h = int(time[0])
-                    m= int(time[1])
-                    if(h<12):
-                        h = h +12
-                    time = str(h) +":"+ time[1]
-                print(time)
-                return time+":00",h,m,s
-            else:
-                if 'hour' in arr.keys():
-                    temp = arr['hour'].split()[0] 
-                    h = int(temp if temp not in times.keys() else times[temp])  
-                if 'minute' in arr.keys():
-                    temp = arr['minute'].split()[0] 
-                    m = int(temp if temp not in times.keys() else times[temp])  
-                if 'second' in arr.keys():
+                if arr['time'] in ['nửa tiếng', 'nửa giờ']:
+                        h = 0
+                        m =30
+                elif arr['time'] in ['nửa đêm','nửa']:
+                        h  = 0
+                        m = 0
+                else:
+                    time = arr['time'] #"hh:mm" or "X giờ"
+                    print("time: ",time)
+                    if ':' not in time:
+                        h = time.split()[0]
+                        print("h:",h)
+                        h = int(h) if h not in times.keys() else times[h]
+                        # time = "{:0>2d}:00".format(h)
+                    else:
+                        temp_h =  time.split(':')[0] 
+                        h = int(temp_h.split()[0])   
+                        temp_m =  time.split(':')[1]
+                        m = int(temp_m.split()[0])
+                    if pod != "" and not(any(filter(lambda i: i in time,['sáng','sớm','trưa']))):
+                        time = time.split(":")
+                        h = int(time[0])
+                        m= int(time[1])
+                        if(h<=12):
+                            h = h +12
+                        # time ="{:0>2d}:{:0>2d}".format(h,time[1])
+                        # time = str(h) +":"+ time[1]
+                # print(time)
+                # if h > 24  or (h==24 and m>0 ):
+                #         return "",h,m,s
+                # else: 
+                #         return time+":00",h,m,ｓ
+            if 'hour' in arr.keys():
+                    if arr['hour'] in ['nửa tiếng','nửa giờ']:
+                        h = 0
+                        m =30
+                    elif arr['hour'] in ['nửa đêm','nửa']:
+                        h  = 0
+                        m = 0
+
+                    else:
+                        temp = arr['hour'].split()[0] 
+                        h = int(temp if temp not in times.keys() else times[temp])  
+            if 'minute' in arr.keys():
+                    if arr['minute'] in ['nửa','rưỡi']:
+                        m = 30
+                    else:
+                        temp = arr['minute'].split()[0] 
+                        m = int(temp if temp not in times.keys() else times[temp])  
+            if 'second' in arr.keys():
                     temp = arr['second'].split()[0] 
                     s = int(temp if temp not in times.keys() else times[temp])  
-                print(h,m,s)
+            print(h,m,s)
 
-                print("R:","{:0>2d}:{:0>2d}:{:0>2d}".format(h,m,s))
-                return "{:0>2d}:{:0>2d}:{:0>2d}".format(h,m,s),h,m,s
+            print("R:","{:0>2d}:{:0>2d}:{:0>2d}".format(h,m,s))
+            if h > 24 or (h==24 and (m>0 or s>0) ):
+                    return "",h,m,s
+            else: 
+                    return "{:0>2d}:{:0>2d}:{:0>2d}".format(h,m,s),h,m,s
         except Exception:
                     return "",h,m,s    
     def parseDate(self,arr,_time): #return day  in dd/mm , "" if day couldnt be parsed
@@ -116,6 +145,7 @@ class AlarmTimerService(Service):
         try:
             arr = self.params[0]
             _time,_,_,_ = self.parseTime(arr)
+            print("time:",_time)
             day = self.parseDate(arr,_time)
 
             
@@ -186,10 +216,15 @@ class MusicService(Service):
             elif genre != "":
                 query = genre 
             else:
-                query = "nhạc"
+                query = ""
             if artist != "":
-                query = query + " của " + artist
+                if query != "":
+                    query = query + " của " + artist
+                else:
+                    query = artist
             
+            if query == "":
+                query = "nhạc"
             print("query: ",query)
             ASRBubble(self.master,"Đang mở "+ query)
             TTS().speak("Đang mở "+ query)
@@ -288,6 +323,8 @@ class SearchService(Service):
 
 
 def search(text):
+            print("Query: ",text)
+            return
             tts = TTS()
             params = {
                 "engine": "google",

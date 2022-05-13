@@ -233,7 +233,7 @@ def scoreBoost(arr,text, slot_preds):
     else:
         for x in range(5):
             arr[0,x] = arr[0,x] - 2
-    imax = np.argmax(arr, axis=1) if np.argmax(arr, axis=1)>=10.0 else 0
+    imax = np.argmax(arr, axis=1) if arr[0,np.argmax(arr, axis=1)]>=10.0 else 0
     print("max:",imax,arr)
     for slot in slot_preds:
         if slot == "O" or "I" in slot:
@@ -263,7 +263,7 @@ def scoreBoost(arr,text, slot_preds):
                     arr[0,x]  = arr[0,x]-1
         if key in ['time']:
             arr[0,2] = arr[0,2]+1
-            arr[0,3] = arr[0,3]+1
+            arr[0,3] = arr[0,3]+2
             for x in range(5):
                 if imax==3 or imax ==2:
                     arr[0,x]  = arr[0,x]-0.5 
@@ -272,7 +272,7 @@ def scoreBoost(arr,text, slot_preds):
 
         if key in ['pod','relative','date_name','date_number','month']:
             arr[0,3] = arr[0,3]+1
-            arr[0,4] = arr[0,4]+1
+            arr[0,4] = arr[0,4]+0.5
             for x in range(5):
                 if imax==4 or imax == 3:
                     arr[0,x]  = arr[0,x]-0.5 
