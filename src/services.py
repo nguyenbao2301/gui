@@ -1,4 +1,5 @@
 
+import time
 from serpapi import GoogleSearch
 import webbrowser
 from youtube_search import YoutubeSearch
@@ -28,14 +29,14 @@ class AlarmTimerService(Service):
                 pod = arr["pod"]
 
             if "time" in arr.keys():
-                if arr['time'] in ['nửa tiếng', 'nửa giờ']:
+                if any(filter(lambda i: i in arr['time'] , ['nửa tiếng', 'nửa giờ'])):
                         h = 0
                         m =30
-                elif arr['time'] in ['nửa đêm','nửa']:
+                elif any(filter(lambda i: i in arr['time'] , ['nửa đêm','nửa'])):
                         h  = 0
                         m = 0
                 else:
-                    time = arr['time'] #"hh:mm" or "X giờ"
+                    time = arr['time'] #"hh:mm" or "X giờ" or "X" 
                     print("time: ",time)
                     if ':' not in time:
                         h = time.split()[0]
@@ -47,10 +48,10 @@ class AlarmTimerService(Service):
                         h = int(temp_h.split()[0])   
                         temp_m =  time.split(':')[1]
                         m = int(temp_m.split()[0])
-                    if pod != "" and not(any(filter(lambda i: i in time,['sáng','sớm','trưa']))):
-                        time = time.split(":")
-                        h = int(time[0])
-                        m= int(time[1])
+                    if pod != "" and not(any([i in pod for i in ['sáng','sớm','trưa']])):
+                        # time = time.split(":")
+                        # h = int(time[0])
+                        # m= int(time[1])
                         if(h<=12):
                             h = h +12
                         # time ="{:0>2d}:{:0>2d}".format(h,time[1])
@@ -61,10 +62,10 @@ class AlarmTimerService(Service):
                 # else: 
                 #         return time+":00",h,m,ｓ
             if 'hour' in arr.keys():
-                    if arr['hour'] in ['nửa tiếng','nửa giờ']:
+                    if any(filter(lambda i: i in arr['hour'] , ['nửa tiếng','nửa giờ'])):
                         h = 0
                         m =30
-                    elif arr['hour'] in ['nửa đêm','nửa']:
+                    elif any(filter(lambda i: i in arr['hour'] , ['nửa đêm','nửa'])):
                         h  = 0
                         m = 0
 
@@ -72,7 +73,7 @@ class AlarmTimerService(Service):
                         temp = arr['hour'].split()[0] 
                         h = int(temp if temp not in times.keys() else times[temp])  
             if 'minute' in arr.keys():
-                    if arr['minute'] in ['nửa','rưỡi']:
+                    if any(filter(lambda i: i in arr['minute'] ,['nửa','rưỡi'])):
                         m = 30
                     else:
                         temp = arr['minute'].split()[0] 
@@ -323,14 +324,18 @@ class SearchService(Service):
 
 
 def search(text):
+            config.read('config.ini',encoding='utf-8')
             print("Query: ",text)
-            return
+            # return
             tts = TTS()
             params = {
                 "engine": "google",
                 "q": text,
                 "hl": "vi",
+                # "location": config.get('main','location'),
                 "gl": "vn",
+                "device":"desktop",
+                # "google_domain":"google.com.vn",
                 "api_key": "ac1585c4813011483eff458315995105014d4f28d6a92ab4f9b0aefc1eb74ef2"
             }
 
@@ -347,9 +352,11 @@ def search(text):
 
             answer_box = None
             tts.speak("Đây là những gì tôi tìm được.")
+            print(results)
+            # time.sleep(1.5)
             if "knowledge_graph" in results.keys():
                 knowledge_graph = results["knowledge_graph"] 
-                # print(type(knowledge_graph), knowledge_graph)
+                print(knowledge_graph)
                 desc = knowledge_graph["description"]
                 tts.speak(desc)
                 return
@@ -403,10 +410,10 @@ def search(text):
 
 def openLink(text):
         query = text.split()
-        base_url = "https://www.google.com/search?q="
+        base_url = "https://www.google.com.vn/search?q="
         for word in query:
             base_url = base_url + word + "+"
-        
+
 
 
         

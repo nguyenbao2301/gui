@@ -212,27 +212,40 @@ class IDSF():
 def scoreBoost(arr,text, slot_preds):
     #Boost prediction score for higher classification accuracy
     songBoost = ['bài hát', 'bài nhạc', 'bài', 'ca khúc', 'phát', 'nhạc', 'giai điệu', 'tác phẩm', 'album','nghe' ,'bật','mở']
-    alarmBoost = ['báo thức', 'lúc', 'sáng', 'chiều', 'tối', 'mỗi', 'dậy','lịch']
+    alarmBoost = ['báo thức', 'lúc', 'sáng', 'chiều', 'tối', 'mỗi', 'dậy','lịch','báo','gọi']
     timerBoost = ['hẹn giờ','sau','giờ','phút','giây','tiếng']
     weatherBoost = ['thời tiết','trời','nắng','mưa','dự báo','gió','nóng','ẩm']
 
-    
+    flag = []
     #for play_song
-    if any(filter(lambda i: i in text,songBoost)):
+    if any([i in text for i in songBoost]):
         arr[0,1] = arr[0,1]+1.5
+        flag.append(1)
+        print('songBoost')
     #for timer
-    elif any(filter(lambda i: i in text,timerBoost)):
+    if any([i in text for i in timerBoost]):
         arr[0,2] = arr[0,2]+1.5
+        flag.append(2)
+        print('timerBoost')
     #for alarm
-    elif any(filter(lambda i: i in text,alarmBoost)):
+    if any([i in text for i in alarmBoost]):
         arr[0,3] = arr[0,3]+1.5
+        flag.append(3)
+        print('alarmBoost')
     #for weather
-    elif any(filter(lambda i: i in text,weatherBoost)):
+    if any([i in text for i in weatherBoost]):
         arr[0,4] = arr[0,4]+1.5
+        flag.append(4)
+        print('weatherBoost')
+
+
     #no boost -> more likely to be unk
-    else:
-        for x in range(5):
-            arr[0,x] = arr[0,x] - 2
+    print('flags: ',flag)
+    for x in range(5):
+            if x not in flag:
+                arr[0,x] = arr[0,x] - 2
+    print('no boost')
+        
     imax = np.argmax(arr, axis=1) if arr[0,np.argmax(arr, axis=1)]>=10.0 else 0
     print("max:",imax,arr)
     for slot in slot_preds:

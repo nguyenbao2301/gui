@@ -3,7 +3,8 @@ from tkinter import messagebox
 import time
 import os
 from PIL import Image,ImageTk
-from src.utils import reduceOpacity,restartThread,browse,PlaySound
+from click import command
+from src.utils import reduceOpacity,restartThread,browse,PlaySound,AudioThread
 from src.KeywordThread import KeywordThread
 from src.RecordPage import RecordToplevel
 from tkinter import filedialog
@@ -379,8 +380,8 @@ class AlarmTimer(tk.Frame):
         self.alarmTitle.grid_columnconfigure(1,weight=1)
         self.alarmTitle.grid_columnconfigure(2,weight=1)
         self.alarmEntry = tk.Entry(self.alarmTitle,textvariable=self.alarm_dir,width=25)
-        self.alarmButton = tk.Button(self.alarmTitle,text="Browse",relief=tk.GROOVE,command=lambda: browse(self.changeAlarm,config.get('main','temp_dir')))
-        self.alarmPlay = tk.Button(self.alarmTitle,text="Play",relief=tk.GROOVE,command=lambda: PlaySound(self.alarm_dir.get(),config.get('main','alarm_volume')))
+        self.alarmButton = tk.Button(self.alarmTitle,text="Chọn",relief=tk.GROOVE,command=self.changeAlarm)
+        self.alarmPlay = tk.Button(self.alarmTitle,text="Phát",relief=tk.GROOVE,command=lambda : self.playAudio(self.alarmPlay))
         
 
         self.alarmTitle.grid(row=1,column=0,sticky= "ew",padx = 10,pady =10,ipadx=10,ipady=10)
@@ -399,8 +400,8 @@ class AlarmTimer(tk.Frame):
         self.timerTitle.grid_columnconfigure(1,weight=1)
         self.timerTitle.grid_columnconfigure(2,weight=1)
         self.timerEntry = tk.Entry(self.timerTitle,textvariable=self.alarm_dir,width=25)
-        self.timerButton = tk.Button(self.timerTitle,text="Browse",relief=tk.GROOVE,command=lambda: browse(self.changeAlarm,config.get('main','temp_dir')))
-        self.timerPlay = tk.Button(self.timerTitle,text="Play",relief=tk.GROOVE,command=lambda: PlaySound(self.timer_dir.get(),config.get('main','timer_volume')))
+        self.timerButton = tk.Button(self.timerTitle,text="Chọn",relief=tk.GROOVE,command=self.changeTimer)
+        self.timerPlay = tk.Button(self.timerTitle,text="Phát",relief=tk.GROOVE,command=lambda : self.playAudio(self.timerPlay))
 
         self.timerTitle.grid(row=3,column=0,sticky= "ew",padx = 10,pady =10,ipadx=10,ipady=10)
         self.timerEntry.grid(row=0,column=0,padx=10,sticky="sew")
@@ -414,8 +415,27 @@ class AlarmTimer(tk.Frame):
         self.timerVolumeSlider.pack(fill="x",expand=True,padx =10)
 
       
-    
+    def playAudio(self,button):
+        global config
+        config.read('config.ini')
+        dir = self.timer_dir.get() if button == self.timerPlay else self.alarm_dir.get()
+        vol = config.get('main','timer_volume') if button == self.timerPlay else config.get('main','alarm_volume')
 
+
+        audioThread = AudioThread(dir,vol)
+        audioThread.daemon= True
+        audioThread.start()
+        button.configure(text='Dừng',command= lambda : self.stopAudio(button,audioThread))
+        button.update()
+
+    def stopAudio(self,button,audioThread):
+        global config
+        config.read('config.ini')
+        audioThread.raise_exception()
+        dir = self.timer_dir.get() if button == self.timerPlay else self.alarm_dir.get()
+        vol = config.get('main','timer_volume') if button == self.timerPlay else config.get('main','alarm_volume')
+        button.configure(text='Phát',command= lambda : self.playAudio(button))
+        button.update()
     def changeAlarmVolume(self,*args):
         config.set('main','alarm_volume',str(self.alarmVolume.get()))
         with open('config.ini', 'w') as f:
@@ -423,14 +443,44 @@ class AlarmTimer(tk.Frame):
             f.close()
 
     def changeTimerVolume(self,*args):
-        config.set('main','alarm_volume',str(self.timerVolume.get()))
+        config.set('main','timer_volume',str(self.timerVolume.get()))
         with open('config.ini', 'w') as f:
             config.write(f)
             f.close()
 
-    def changeAlarm(self,curDir,*args):
+    def changeAlarm(self,*args):
+        global config
+        config.read('config.ini')
+        sound_file = filedialog.askopenfile(filetypes=[('Audio Files', ['.mp3','.mp4','.wav'])])
+        if not sound_file:
+            return
+        sound_file = os.path.normpath(sound_file.name)
+        
+
+
+        config.set('main','alarm_dir',sound_file)
+        with open('config.ini', 'w') as f:
+            config.write(f)
+            f.close()
+        
+        self.alarm_dir.set(sound_file)
         return
-    def changeTimer(self,curDir,*args):
+
+    def changeTimer(self,*args):
+        global config
+        config.read('config.ini')
+        sound_file = filedialog.askopenfile(filetypes=[('Audio Files', ['.mp3','.mp4','.wav'])])
+        if not sound_file:
+            return
+        sound_file = os.path.normpath(sound_file.name)
+        
+
+
+        config.set('main','timer_dir',sound_file)
+        with open('config.ini', 'w') as f:
+            config.write(f)
+            f.close()
+        self.timer_dir.set(sound_file)
         return
     def changeImage(self,tag,*args):
         print(tag)

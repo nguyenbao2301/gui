@@ -98,7 +98,7 @@ class MainApp(tk.Frame):
         y = self.controller.winfo_y() + deltay
         x = 0 if x<0 else x
         y= 0 if y<0 else y
-        x= self.controller.winfo_screenwidth()-150 if x>self.controller.winfo_screenwidth()-150 else x
+        # x= self.controller.winfo_screenwidth()-150 if x>self.controller.winfo_screenwidth()-150 else x
         y= self.controller.winfo_screenheight()-150 if y>self.controller.winfo_screenheight()-150 else y
         self.controller.geometry(f"+{x}+{y}")
 

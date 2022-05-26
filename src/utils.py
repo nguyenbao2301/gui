@@ -1,3 +1,4 @@
+from cmath import exp
 from PIL import ImageEnhance
 import tkinter as tk
 from tkinter import filedialog,messagebox
@@ -11,14 +12,63 @@ import logging
 import numpy as np
 import soundfile as sf
 from audioplayer import AudioPlayer
+import time
+import threading 
+import ctypes
 
+class AudioThread(threading.Thread):
+    def __init__(self,file,volume):
+        threading.Thread.__init__(self)
+        self.file = file
+        self.vol = volume
+    def run(self):
+        try:
+            self.a = AudioPlayer(self.file)
+            self.a.volume = int(self.vol)
+            self.a.play(loop=True)
+            while(True):
+                continue
+        finally:
+            self.a.stop()
+            self.a.close()
+            print('ended')
 
-def PlaySound(file,volume):
-    volume = int(volume)
-    a = AudioPlayer(file)
-    a.volume = volume
-    a.play(block=True)
+    def get_id(self):
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+  
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+              ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            # print('Exception raise failure')
 
+def PlaySound(file,volume,_block=True):
+    try:
+        volume = int(volume)
+        a = AudioPlayer(file)
+        a.volume = volume
+        a.play(block=_block)
+    except Exception:
+        print("audio error")
+
+def PlayAlarm(file,volume):
+    try:
+        volume = int(volume)
+        a = AudioPlayer(file)
+        a.volume = volume
+        a.play(loop=True)
+        time.sleep(1)
+        a.pause()
+        return a
+    except Exception:
+        print("audio alarm error")
+        return None
 def reduceOpacity(img,opacity):
     if hasattr(img,"mode") and img.mode != 'RGBA':
         i = img.convert('RGBA')

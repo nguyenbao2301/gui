@@ -3,8 +3,8 @@ import datetime
 import threading 
 from PIL import Image,ImageTk
 import tkinter as tk
-from src.ASRBubble import ASRBubble
-
+from src.utils import PlayAlarm
+from audioplayer import AudioPlayer
 from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini')
@@ -15,6 +15,9 @@ class TimerThread(threading.Thread):
         self.total = 0
         self.target = target
         self.total = 3600*h + 60*m + s
+        self.daemon = True
+        self.audio = None
+        self.flag = True
         print(h,m,s,self.total)
         
 
@@ -32,8 +35,21 @@ class TimerThread(threading.Thread):
                     print(timer,end='\r')
                     time.sleep(1)
                     self.total -= 1
+                _audio = config.get('main','timer_dir')
+                _volume = int(config.get('main','timer_volume'))
+                try:
+                    if self.audio == None:
+                        self.audio = AudioPlayer(_audio)
+                        self.audio.volume = _volume
+                        self.audio.play(loop=True)
+                except Exception:
+                    print("audio alarm error")
                 self.display(self.target)
+                while(self.flag):
+                    continue
         finally:
+            if self.audio != None:
+                self.audio.stop()
             print('ended')
 
     def display(self, target):
@@ -43,4 +59,9 @@ class TimerThread(threading.Thread):
         alarmFrame.image = self.img
         alarmFrame.place(in_=target,x=-1,y=-1,anchor="nw")
 
-        alarmFrame.bind('<Double-Button-1>', lambda x: alarmFrame.destroy())
+        alarmFrame.bind('<Double-Button-1>', lambda x: self._close(alarmFrame))
+
+    def _close(self,frame):
+        self.flag = False
+        frame.destroy()
+
