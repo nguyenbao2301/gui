@@ -6,3 +6,4 @@ IDSF/
 *.bak
 alarms.txt
 env/
+config.ini

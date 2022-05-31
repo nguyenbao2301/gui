@@ -17,7 +17,10 @@ class Service():
     def __init__(self,master,*params):
         self.master = master
         self.params = params
-    
+    def onException(self):
+        ASRBubble(self.master,"Xin lỗi, tôi không nghe rõ câu đó")  
+        TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")
+
 class AlarmTimerService(Service):
     def parseTime(self,arr): 
         pod = ""
@@ -171,9 +174,7 @@ class AlarmTimerService(Service):
             TTS().speak("Tôi đã đặt một báo thức lúc {} ngày {}".format(_time, _date))
             addAlarm(day,_time)
         except Exception:
-            ASRBubble(self.master,"Xin lỗi, tôi không nghe rõ câu đó")  
-            TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")  
-            return
+            self.onException()
 
 
     def setTimer(self,target): #target: MainApp frame
@@ -189,9 +190,7 @@ class AlarmTimerService(Service):
             TTS().speak("Tôi đã đặt một hẹn giờ cho {} giờ {} phút và {} giây".format(h,m,s)) 
             target.setTimer(_time)
         except Exception:
-            ASRBubble(self.master,"Xin lỗi, tôi không nghe rõ câu đó")  
-            TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")  
-            return
+            self.onException()
 class MusicService(Service):
     def createQuery(self):
         try:
@@ -231,8 +230,7 @@ class MusicService(Service):
             TTS().speak("Đang mở "+ query)
             return query
         except Exception:
-            ASRBubble(self.master,"Xin lỗi, tôi không nghe rõ câu đó")  
-            TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")  
+            self.onException()
             return ""
     def searchQuery(self,query):
         if query == "":
@@ -308,8 +306,6 @@ class WeatherService(Service):
             print("query: ",query)
             return query
         except Exception:
-            # ASRBubble(self.master,"Xin lỗi, tôi không nghe rõ câu đó")  
-            # TTS().speak("Xin lỗi, tôi không nghe rõ câu đó")  
             return "" 
     def searchQuery(self,query):
             search(query)
