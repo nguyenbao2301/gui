@@ -120,6 +120,7 @@ def DTWloop(func):
         n= int(n/listener.chunk)
         frames = []
         while(True):
+            time.sleep(0.001)
             res = 0
             config.read('config.ini')
             try:

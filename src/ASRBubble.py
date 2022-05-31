@@ -37,19 +37,4 @@ class ASRBubble(tk.Toplevel):
         self.master.controller.overrideredirect(True)
         return  
 
-# def recognize(master,recognizer,microphone,idsf):
-#     with microphone as source:
-#             audio = recognizer.listen(source,phrase_time_limit = 5)
-#             try:
-#                 response = recognizer.recognize_google(audio,language="vi-VN")
-#             except Exception:
-#                 response = None
-#         # print(response, globals.status)
-#     if response != None:
-#         text,intent,slots = idsf.predict(response.lower())
-#         print(intent,text,slots)
-#         process(intent,text,slots,master)
-#         ASRBubble(master,text)
-#             # processor.process(response.lower())
-#     else:
-#         ASRBubble(master,"Sorry, I didn't quite get that")     
+

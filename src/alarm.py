@@ -52,6 +52,7 @@ class AlarmThread(threading.Thread):
 
     def wait(self):
         while True:
+                time.sleep(0.001)
                 now = int(datetime.now().strftime('%S'))
                 if now == 0:
                     break
