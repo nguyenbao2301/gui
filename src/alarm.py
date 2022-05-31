@@ -1,10 +1,8 @@
-from socketserver import ThreadingUDPServer
 import time
 from datetime import date, datetime
 import threading 
 import tkinter as tk
 from PIL import Image,ImageTk
-from src.utils import PlayAlarm
 from configparser import ConfigParser
 from audioplayer import AudioPlayer
 config = ConfigParser()

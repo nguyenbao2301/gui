@@ -3,7 +3,6 @@ import datetime
 import threading 
 from PIL import Image,ImageTk
 import tkinter as tk
-from src.utils import PlayAlarm
 from audioplayer import AudioPlayer
 from configparser import ConfigParser
 config = ConfigParser()
